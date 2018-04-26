@@ -89,30 +89,12 @@ double R_MOON[3];
 
 void IsisMain() {
   UserInterface &ui = Application::GetUserInterface();
-  double  time0,//start time
-          time1,//end time
-          alti,  //altitude of the spacecraftmore
-          fmc,  //forward motion compensation rad/sec
-          horV,  //horizontal velocity km/sec
-          radV,  //radial velocity km/sec
-          rollV,//roll speed in rad/sec
-          led;  //line exposure duration in seconds
-
-  iTime  isisTime;
-  QString iStrTEMP;
-
-  int i,j,k,scFrameCode,insCode;
-
-  QString mission;
-
-  SpicePosition *spPos;
-  SpiceRotation *spRot;
 
   //int nlines,nsamples,nbands;
 
   double deg2rad = acos(-1.0)/180.0;
 
-  Cube  panCube;
+  Cube panCube;
   try {
     panCube.open(ui.GetFileName("FROM"),"rw");
   }
@@ -123,21 +105,22 @@ void IsisMain() {
   }
 
   Pvl *panLabel = panCube.label();
-  FileName transFile("/work/users/kdlee/apollopanInstrument.trn");
-  PvlToPvlTranslationManager translater(*panLabel, transFile.expanded());
-  translater.Auto(*panLabel);
+
+  // Create the Instrument group
+  FileName instrumentTransFile("/work/users/kdlee/apollopanInstrument.trn");
+  PvlToPvlTranslationManager instrumentXlater(*panLabel, instrumentTransFile.expanded());
+  instrumentXlater.Auto(*panLabel);
 
   //scFrameCode and insCode from user input
-  mission = ui.GetString("MISSION");
+  QString mission = ui.GetString("MISSION");
+  int scFrameCode;
   if (mission == "APOLLO12") scFrameCode = -912000;
   if (mission == "APOLLO14") scFrameCode = -914000;
   if (mission == "APOLLO15") scFrameCode = -915000;
   if (mission == "APOLLO16") scFrameCode = -916000;
   if (mission == "APOLLO17") scFrameCode = -917000;
 
-  insCode = scFrameCode - 230;
-
-  ////////////////////////////////////////////build the cube header instrument group
+  int insCode = scFrameCode - 230;
 
   // //four that are the same for every panaramic mission
   // keyword.setName("SpacecraftName");
@@ -157,26 +140,30 @@ void IsisMain() {
   // inst_pvlG.addKeyword(keyword);
 
   //three that need to be calculated from input values
-  horV = ui.GetDouble("VEL_HORIZ");
-  radV = ui.GetDouble("VEL_RADIAL");
-  alti = ui.GetDouble("CRAFT_ALTITUDE");
+  double horV = ui.GetDouble("VEL_HORIZ");  //horizontal velocity km/sec
+  double radV = ui.GetDouble("VEL_RADIAL"); //radial velocity km/sec
+  double alti = ui.GetDouble("CRAFT_ALTITUDE"); //altitude of the spacecraftmore
 
   //caculate the LineExposureDuration (led)
-  if( ui.WasEntered("V/H_OVERRIDE") )
+  if ( ui.WasEntered("V/H_OVERRIDE") )
     fmc = ui.GetDouble("V/H_OVERRIDE")/1000.0;
   else
-  //forward motion compensation is directly equivalent to V/H
-  fmc = sqrt(horV*horV + radV*radV)/alti;
-  rollV = fmc*ROLLC;  //roll angular velcoity is equal to  V/H * constant    (units rad/sec)
-  //led = rad/mm * sec/rad = radians(2.5)/FIDL / rollV    (final units: sec/mm)
-  led = (2.5*acos(-1.0)/180.0)/rollV/FIDL;
+  //forward motion compensation is directly equivalent to V/H (units rad/sec)
+  double fmc = sqrt(horV*horV + radV*radV)/alti;
+
+  //roll angular velcoity is equal to  V/H * constant (units rad/sec)
+  double rollV = fmc*ROLLC;
+
+  //line exposure duration is eqial to rad/mm * sec/rad = radians(2.5)/FIDL / rollV
+  //(final units: sec/mm)
+  double led = (2.5*acos(-1.0)/180.0)/rollV/FIDL;
 
   //use led and the number of mm to determine the start and stop times
-  isisTime = ui.GetString("GMT");
+  iTime isisTime = ui.GetString("GMT");
 
   //calculate starting and stoping times
-  time0 = isisTime.Et() - led*FIDL*21.5;
-  time1 = time0 + led*FIDL*43;
+  time0 = isisTime.Et() - led*FIDL*21.5;  // start time
+  time1 = time0 + led*FIDL*43;            // end time
 
   // Add needed keywords that are not in the Instrument label
   PvlGroup &inst_pvlG = panLabel->findGroup("Instrument", Pvl::Traverse);
@@ -188,6 +175,7 @@ void IsisMain() {
 
   isisTime = time0;
   keyword.setName("StartTime");
+  QString iStrTEMP;
   keyword.setValue(iStrTEMP=isisTime.UTC());
   inst_pvlG.addKeyword(keyword);
 
@@ -259,15 +247,15 @@ void IsisMain() {
   SpiceBoolean found;
   //get the framecode from the body code (301=MOON)
   cidfrm_c(301, sizeof(frameName), &frameCode, frameName, &found);
-  if(!found) {
+  if (!found) {
     QString naifTarget = QString("IAU_MOOM");
     namfrm_c(naifTarget.toLatin1().data(), &frameCode);
-    if(frameCode == 0) {
+    if (frameCode == 0) {
       QString msg = "Can not find NAIF code for [" + naifTarget + "]";
       throw IException(IException::Io, msg, _FILEINFO_);
     }
   }
-  spRot = new SpiceRotation(frameCode);
+  SpiceRotation *spRot = new SpiceRotation(frameCode);
   //create a table from starttime to endtime (streched by 3%) with NODES entries
   spRot->LoadCache(time0-0.015*(time1-time0), time1+0.015*(time1-time0), NODES);
   Table tableTargetRot = spRot->Cache("BodyRotation");
@@ -276,7 +264,7 @@ void IsisMain() {
 
 
   //////////////////////////////////////////////////attach a sun position table
-  spPos = new SpicePosition(10,301);  //Position of the sun (10) WRT to the MOON (301)
+  SpicePosition *spPos = new SpicePosition(10,301);  //Position of the sun (10) WRT to the MOON (301)
   //create a table from starttime to endtime (stretched by 3%) with NODES entries
   spPos->LoadCache(time0-0.015*(time1-time0), time1+0.015*(time1-time0), NODES);
   Table tableSunPos = spPos->Cache("SunPosition");
@@ -485,8 +473,8 @@ void IsisMain() {
   MfromLeftEulers(M0, omega, phi, kappa);  //rotation matrix in the center Q[(NOPDES-1)/2]
   spRot->SetEphemerisTime(isisTime.Et());
   M_J2toT = spRot->Matrix();   //this actually gives the rotation from J2000 to target centric
-  for(j=0; j<3; j++)    //reformating M_J2toT to a 3x3
-    for(k=0; k<3; k++)
+  for (int j=0; j<3; j++)    //reformating M_J2toT to a 3x3
+    for (int k=0; k<3; k++)
       Mtemp1[j][k] = M_J2toT[3*j+k];
   mxm_c(M0, Mtemp1, Mtemp2);
   M2Q(Mtemp2, Q[(NODES-1)/2]);  //save the middle scan line quarternion
@@ -521,8 +509,8 @@ void IsisMain() {
     //this actually gives the rotation from J2000 to target centric--hence the mxmt_c function being
     //  used later
     M_J2toT = spRot->Matrix();
-    for(j=0; j<3; j++)  //reformating M_J2toT to a 3x3
-      for(k=0; k<3; k++)
+    for (int j=0; j<3; j++)  //reformating M_J2toT to a 3x3
+      for (int k=0; k<3; k++)
         Mtemp1[j][k] = M_J2toT[3*j+k];
     mxm_c(M0, Mtemp1, Mtemp2);
     M2Q(Mtemp2, Q[i]);    //convert to a quarterion
@@ -531,7 +519,7 @@ void IsisMain() {
   MfromLeftEulers(M0, omega, phi, kappa);  //rotation matrix in the center Q[(NOPDES-1)/2]
   //Mdr is constant for all the backward time computations
   MfromLeftEulers(Mdr, -cacheSlope*rollV, 0.0, 0.0);
-  for (i=(NODES-1)/2-1; i>=0; i--) {  //moving backward in time
+  for (int i=(NODES-1)/2-1; i>=0; i--) {  //moving backward in time
     Q[i][4] = Q[i+1][4] - cacheSlope;  //new time epoch
     //epoch center time relative to the center line
     relT = double(i  - (NODES-1)/2 + 0.5)*cacheSlope;
@@ -554,14 +542,14 @@ void IsisMain() {
     //now adding the rotation from the target frame to J2000
     spRot->SetEphemerisTime(Q[i][4]);
     M_J2toT = spRot->Matrix();
-    for(j=0; j<3; j++)  //reformating M_J2toT to a 3x3
-      for(k=0; k<3; k++)
+    for (int j=0; j<3; j++)  //reformating M_J2toT to a 3x3
+      for (int k=0; k<3; k++)
         Mtemp1[j][k] = M_J2toT[3*j+k];
     mxm_c(M0, Mtemp1, Mtemp2);
     M2Q(Mtemp2, Q[i]);    //convert to a quarterion
   }
   //fill in the table
-  for (i=0; i<NODES; i++) {
+  for (int i=0; i<NODES; i++) {
     recordRot[0] = Q[i][0];
     recordRot[1] = Q[i][1];
     recordRot[2] = Q[i][2];
@@ -585,7 +573,7 @@ void IsisMain() {
 
   keyword.setName("ConstantRotation");
   keyword.setValue("1");
-  for (i=1;i<9;i++)
+  for (int i=1;i<9;i++)
     if (i%4 == 0) keyword.addValue("1");
     else keyword.addValue("0");
   tableRot.Label() += keyword;
@@ -632,13 +620,13 @@ void IsisMain() {
           averageLines     = AVERl  *5.0/resolution;  //scaled average distance between the top and
                                                       //bottom fiducials
 
-  if( 15.0/resolution < 1.5) play=1.5;
+  if ( 15.0/resolution < 1.5) play=1.5;
   else play = 15.0/resolution;
 
   //copy the patternS chip (the entire ApolloPanFiducialMark.cub)
   FileName fiducialFileName("$apollo15/calibration/ApolloPanFiducialMark.cub");
   fidC.open(fiducialFileName.expanded(),"r");
-  if( !fidC.isOpen() ) {
+  if ( !fidC.isOpen() ) {
     QString msg = "Unable to open the fiducial patternS cube: ApolloPanFiducialMark.cub\n";
     throw IException(IException::User, msg, _FILEINFO_);
   }
@@ -662,7 +650,7 @@ void IsisMain() {
   Chip inputChip,selectionChip;
   inputChip.SetSize(int(ceil(200*5.0/resolution)), int(ceil(200*5.0/resolution)));
   fileName = ui.GetFileName("FROM");
-  if( panCube.pixelType() == 1)  //UnsignedByte
+  if ( panCube.pixelType() == 1)  //UnsignedByte
     centroid.setDNRange(12, 1e99);  //8 bit bright target
   else
     centroid.setDNRange(3500, 1e99);  //16 bit bright target
@@ -674,10 +662,10 @@ void IsisMain() {
   //Search for the first fiducial, search sizes are constanst
   searchS.SetSize(int(searchCellSize/scale),int(searchCellSize/scale));
   //now start searching along a horizontal line for the first fiducial mark
-  for(l = searchCellSize/2;
+  for (int l = searchCellSize/2;
       l<searchHeight+searchCellSize/2.0 && !foundFirst;
       l+=searchCellSize-125*5.0/resolution) {
-    for (s = searchCellSize/2;
+    for (int s = searchCellSize/2;
          s < averageSamples + searchCellSize/2.0 && !foundFirst;
          s += searchCellSize-125*5.0/resolution) {
       searchS.TackCube(s, l);
@@ -702,7 +690,7 @@ void IsisMain() {
       }
     }
   }
-  if(s>=averageLines+searchCellSize/2.0) {
+  if (s>=averageLines+searchCellSize/2.0) {
      QString msg = "Unable to locate a fiducial mark in the input cube [" + fileName +
                   "].  Check FROM and MICRONS parameters.";
      throw IException(IException::Io, msg, _FILEINFO_);
@@ -715,7 +703,7 @@ void IsisMain() {
   recordFid[1] = sampleInitial;
   recordFid[2] = lineInitial;
   tableFid += recordFid;
-  for (s= sampleInitial, l=lineInitial, fidn=0;  s<panS;  s+=averageSamples, fidn++) {
+  for (int s= sampleInitial, l=lineInitial, fidn=0;  s<panS;  s+=averageSamples, fidn++) {
      //corrections for half spacing of center fiducials
      if (fidn == 22) s -= averageSamples/2.0;
      if (fidn == 23) s -= averageSamples/2.0;
@@ -817,15 +805,15 @@ void Load_Kernel(Isis::PvlKeyword &key) {
   //Load all the kernal files (file names are stored as values of the PvlKeyword)
   NaifStatus::CheckErrors();
 
-  for(int i = 0; i < key.size(); i++) {
-     if(key[i] == "") continue;
-     if(QString(key[i]).toUpper() == "NULL") break;
-     if(QString(key[i]).toUpper() == "NADIR") break;
+  for (int i = 0; i < key.size(); i++) {
+     if (key[i] == "") continue;
+     if (QString(key[i]).toUpper() == "NULL") break;
+     if (QString(key[i]).toUpper() == "NADIR") break;
      //Table was left as the first value of these keywords because one is about to be attached,
      //  still though it needs to be skipped in this loop
-     if(QString(key[i]).toUpper() == "TABLE") continue;
+     if (QString(key[i]).toUpper() == "TABLE") continue;
      Isis::FileName file(key[i]);
-     if(!file.fileExists()) {
+     if (!file.fileExists()) {
        QString msg = "Spice file does not exist [" + file.expanded() + "]";
        throw IException(IException::Io, msg, _FILEINFO_);
      }
@@ -937,9 +925,9 @@ void M2Q(double M[3][3], double Q[4])
   temp = fabs(M[0][0]);
   index[0] = 0;
 
-  for(i=1; i<2 ; i++)
+  for (int i=1; i<2 ; i++)
   {
-    if( fabs(M[i][i] ) > temp )
+    if ( fabs(M[i][i] ) > temp )
     {
       temp = fabs(M[i][i]);
       index[0] = i;
@@ -947,16 +935,16 @@ void M2Q(double M[3][3], double Q[4])
   }
 
   index[1] = index[0] + 1;
-  if( index[1] > 2 )
+  if ( index[1] > 2 )
     index[1] -= 3;
 
   index[2] = index[1] + 1;
-  if( index[2] > 2 )
+  if ( index[2] > 2 )
     index[2] -= 3;
 
   temp = sqrt(1 + M[index[0]][index[0]] - M[index[1]][index[1]] - M[index[2]][index[2]]);
 
-  if( temp == 0 )
+  if ( temp == 0 )
   {
     Q[0] = 1;
     Q[1] = 0;
