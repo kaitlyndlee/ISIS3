@@ -230,8 +230,6 @@ void IsisMain() {
   keyword.setValue( kernelsTable.Translate("InstrumentAddendum",mission));
   kernels_pvlG.addKeyword(keyword);
 
-  cout<<*panCube.label()<<endl;
-
   // Load all the kernals
   Load_Kernel(kernels_pvlG["TargetPosition"]);
   Load_Kernel(kernels_pvlG["TargetAttitudeShape"]);
@@ -290,7 +288,6 @@ void IsisMain() {
                       { 0.0, 0.0, 0.0 },
                       { 0.0, 0.0, 0.0 } };  // rotation matrix
   double  zDir[] = { 0.0, 0.0, 1.0 };       // selenographic Z axis
-
   double  northPN[3]  = { 0.0, 0.0, 0.0 };  // normal to the plane containing all the north/south directions, that is plane
                                             // containing the origin, the z axis, and the primary point of intersection
 
@@ -298,7 +295,6 @@ void IsisMain() {
   double  azm[3] = { 0.0, 0.0, 0.0 };       // azm direction of the veclocity vector in selenographic coordinates
   double  azmP[3] = { 0.0, 0.0, 0.0 };      // azm rotated (partially) and projected into the image plane
   double  norm[3] = { 0.0, 0.0, 0.0 };      // normal to the local horizontal plane
-
   double  look[3] = { 0.0, 0.0, 0.0 };      // unit direction vector in the pincipal cameral look direction,
                                             // parallel to the vector from the center of the moon through the spacecraft
 
@@ -451,7 +447,6 @@ void IsisMain() {
   double  rollComb;     // magnitude of roll relative to the center in the middle of the epoch
   double  relT;         // relative time at the center of each epoch
   double  Q[NODES][5];  // NODES four ellement unit quarternions and et (to be calculated).
-
   double  gimVec[3];    // the direction of the gimbal rotation vector (to the cameras persepective
                         // this is always changing because the camera is mounted to the roll frame
                         // assembly which is mounted to the gimbal)
@@ -633,13 +628,11 @@ void IsisMain() {
   // read the image resolutions and scale the constants acordingly
   double  resolution       = ui.GetDouble("MICRONS"); // pixel size in microns
   double  scale            = SCALE  *5.0/resolution;  // reduction scale for fast autoregistrations
-
   double  searchHeight     = SEARCHh*5.0/resolution;  // number of lines (in 5-micron-pixels) in
                                                       // search space for the first fiducial
 
   double  searchCellSize   = SEARCHc*5.0/resolution;  // height/width of search chips block
   double  averageSamples   = AVERs  *5.0/resolution;  // scaled smaples between fiducials
-
   double  averageLines     = AVERl  *5.0/resolution;  // scaled average distance between the top and
                                                       // bottom fiducials
 
