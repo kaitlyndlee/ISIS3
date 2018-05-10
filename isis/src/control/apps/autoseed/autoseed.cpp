@@ -246,13 +246,32 @@ void IsisMain() {
   int cpIgnoredCount = 0;
   int cmIgnoredCount = 0;
 
+  Pvl outputPvl;
+  PvlKeyword imageSN;
+  PvlKeyword NoOverlap;
+  PvlObject overlapPolygon;
+  PvlGroup imageList;
+  PvlKeyword seededPoints;
+  ImageOverlap imageOV;
+
   for (int ov = 0; ov < overlaps.Size(); ++ov) {
     progress.CheckStatus();
 
     if (overlaps[ov]->Size() == 1) {
       stats_noOverlap++;
+      NoOverlap = PvlKeyword("OverlapPolygon" + QString::number(ov + 1), "No Overlap");
+      outputPvl.addKeyword(NoOverlap);
       continue;
     }
+
+    overlapPolygon = PvlObject("OverlapPolygon" + QString::number(ov + 1));
+    imageList = PvlGroup("OverlappingImages");
+    imageOV = *overlaps[ov];
+    for (int i = 0; i < imageOV.Size(); i++) {
+      imageSN = PvlKeyword("Image", imageOV[i]);
+      imageList.addKeyword(imageSN);
+    }
+    overlapPolygon.addGroup(imageList);
 
     // Checks if this overlap was already seeded
     if (previousControlNet) {
@@ -270,8 +289,15 @@ void IsisMain() {
         }
       }
 
-      if (overlapSeeded) continue;
+      if (overlapSeeded) {
+        seededPoints = PvlKeyword("SeededPoints", "No points seeded; points already seeded" );
+        overlapPolygon.addKeyword(seededPoints);
+        continue;
+      }
     }
+
+    outputPvl.addObject(overlapPolygon);
+    cout << outputPvl <<endl;
 
     // Seed this overlap with points
     const geos::geom::MultiPolygon *polygonOverlaps = overlaps[ov]->Polygon();
@@ -518,5 +544,4 @@ void IsisMain() {
 
   delete seeder;
   seeder = NULL;
-
 }
