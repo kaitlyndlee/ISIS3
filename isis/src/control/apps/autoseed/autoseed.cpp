@@ -252,7 +252,6 @@ void IsisMain() {
   PvlObject overlapPolygon;
   PvlGroup imageList;
   PvlKeyword seededPoints;
-  ImageOverlap imageOV;
 
   for (int ov = 0; ov < overlaps.Size(); ++ov) {
     progress.CheckStatus();
@@ -266,9 +265,9 @@ void IsisMain() {
 
     overlapPolygon = PvlObject("OverlapPolygon" + QString::number(ov + 1));
     imageList = PvlGroup("OverlappingImages");
-    imageOV = *overlaps[ov];
-    for (int i = 0; i < imageOV.Size(); i++) {
-      imageSN = PvlKeyword("Image", imageOV[i]);
+    const ImageOverlap *imageOV = overlaps[ov];
+    for (int i = 0; i < imageOV->Size(); i++) {
+      imageSN = PvlKeyword("ImageSN", (*imageOV)[i]);
       imageList.addKeyword(imageSN);
     }
     overlapPolygon.addGroup(imageList);
@@ -290,7 +289,7 @@ void IsisMain() {
       }
 
       if (overlapSeeded) {
-        seededPoints = PvlKeyword("SeededPoints", "No points seeded; points already seeded" );
+        seededPoints = PvlKeyword("SeededPoints", "No points seeded because they were previously seeded" );
         overlapPolygon.addKeyword(seededPoints);
         continue;
       }
@@ -320,7 +319,7 @@ void IsisMain() {
         if (errorNum > 0) {
           errors << endl;
         }
-        errorNum ++;
+        errorNum++;
 
         errors << e.toPvl().group(0).findKeyword("Message")[0];
         for (int serNum = 0; serNum < overlaps[ov]->Size(); serNum++) {
@@ -346,7 +345,7 @@ void IsisMain() {
     vector<geos::geom::Point *> seed;
     if (seedDomain == XY) {
       // Convert the X/Y points back to Lat/Lon points
-      for (unsigned int pt = 0; pt < points.size(); pt ++) {
+      for (unsigned int pt = 0; pt < points.size(); pt++) {
         if (proj->SetCoordinate(points[pt]->getX(), points[pt]->getY())) {
           seed.push_back(Isis::globalFactory.createPoint(
                            geos::geom::Coordinate(proj->UniversalLongitude(),
