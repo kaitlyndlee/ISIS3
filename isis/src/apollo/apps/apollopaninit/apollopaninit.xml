@@ -25,7 +25,10 @@
       Application category name changed from Import and Export to Apollo.  Fixes mantis ticket #951.
     </change>
     <change name="Kaitlyn Lee" date="2018-05-01">
-      Translation file is used more proficiently. Fixes #5303.
+      Translation file is used more proficiently with an Auto method call.
+      Updated and split translation file into two: apollopanInstrument and
+      apollopanKernels. Refactored code to be up to ISIS standards and increase
+      readability. Fixes #5303.
     </change>
   </history>
 

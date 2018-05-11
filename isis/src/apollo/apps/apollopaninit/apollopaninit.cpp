@@ -100,7 +100,7 @@ void IsisMain() {
   Pvl *panLabel = panCube.label();
 
   // Create the Instrument group
-  FileName instrumentTransFile("/work/users/kdlee/apollopanInstrument.trn");
+  FileName instrumentTransFile("/work/users/kdlee/m05303/apollopanInstrument.trn");
   PvlToPvlTranslationManager instrumentXlater(*panLabel, instrumentTransFile.expanded());
   instrumentXlater.Auto(*panLabel);
 
@@ -114,23 +114,6 @@ void IsisMain() {
   if (mission == "APOLLO17") scFrameCode = -917000;
 
   int insCode = scFrameCode - 230;
-
-  // //four that are the same for every panaramic mission
-  // keyword.setName("SpacecraftName");
-  // keyword.setValue(mission);
-  // inst_pvlG.addKeyword(keyword);
-  //
-  // keyword.setName("InstrumentName");
-  // keyword.setValue(transTable.Translate("InstrumentName","whatever"));
-  // inst_pvlG.addKeyword(keyword);
-  //
-  // keyword.setName("InstrumentId");
-  // keyword.setValue(transTable.Translate("InstrumentId","whatever"));
-  // inst_pvlG.addKeyword(keyword);
-  //
-  // keyword.setName("TargetName");
-  // keyword.setValue(transTable.Translate("TargetName","whatever"));
-  // inst_pvlG.addKeyword(keyword);
 
   // three that need to be calculated from input values
   double horV = ui.GetDouble("VEL_HORIZ");      // horizontal velocity km/sec
@@ -165,9 +148,8 @@ void IsisMain() {
   PvlGroup &inst_pvlG = panLabel->findGroup("Instrument", Pvl::Traverse);
   PvlKeyword keyword;
 
-  keyword.setName("SpacecraftName");
-  keyword.setValue(mission);
-  inst_pvlG.addKeyword(keyword);
+  PvlKeyword &nameKeyword = inst_pvlG.findKeyword("SpacecraftName");
+  nameKeyword.setValue(mission);
 
   isisTime = time0;
   keyword.setName("StartTime");
@@ -186,49 +168,28 @@ void IsisMain() {
   inst_pvlG.addKeyword(keyword);
 
   // Create the Kernels group
-  FileName kernelsTransFile("/work/users/kdlee/apollopanKernels.trn");
+  FileName kernelsTransFile("/work/users/kdlee/m05303/apollopanKernels.trn");
   PvlToPvlTranslationManager kernelsXlater(*panLabel, kernelsTransFile.expanded());
   kernelsXlater.Auto(*panLabel);
 
-  // Add needed keywords that are not in the Kernels label
+  // Update keywords with placeholder values
   PvlGroup &kernels_pvlG = panLabel->findGroup("Kernels", Pvl::Traverse);
   PvlTranslationTable kernelsTable(kernelsTransFile.expanded());
 
-  keyword.setName("NaifFrameCode");
-  keyword.setValue(toString(insCode));
-  kernels_pvlG.addKeyword(keyword);
+  PvlKeyword &naifKeyword = kernels_pvlG.findKeyword("NaifFrameCode");
+  naifKeyword.setValue(toString(insCode));
 
-  // keyword.setName("LeapSecond");
-  // keyword.setValue( transTable.Translate("LeapSecond","File1") );
-  // kernels_pvlG.addKeyword(keyword);
+  PvlKeyword &shapeKeyword = kernels_pvlG.findKeyword("TargetAttitudeShape");
+  shapeKeyword.setValue( kernelsTable.Translate("TargetAttitudeShape", "File1") );
+  shapeKeyword.addValue( kernelsTable.Translate("TargetAttitudeShape", "File2") );
+  shapeKeyword.addValue( kernelsTable.Translate("TargetAttitudeShape", "File3") );
 
-  keyword.setName("TargetAttitudeShape");
-  keyword.setValue( kernelsTable.Translate("TargetAttitudeShape", "File1") );
-  keyword.addValue( kernelsTable.Translate("TargetAttitudeShape", "File2") );
-  keyword.addValue( kernelsTable.Translate("TargetAttitudeShape", "File3") );
-  kernels_pvlG.addKeyword(keyword);
+  PvlKeyword &positionKeyword = kernels_pvlG.findKeyword("TargetPosition");
+  positionKeyword.addValue( kernelsTable.Translate("TargetPosition", "File1") );
+  positionKeyword.addValue( kernelsTable.Translate("TargetPosition", "File2") );
 
-  keyword.setName("TargetPosition");
-  keyword.setValue("Table");
-  keyword.addValue( kernelsTable.Translate("TargetPosition", "File1") );
-  keyword.addValue( kernelsTable.Translate("TargetPosition", "File2") );
-  kernels_pvlG.addKeyword(keyword);
-
-  // keyword.setName("ShapeModel");
-  // keyword.setValue( transTable.Translate("ShapeModel", "File1") );
-  // kernels_pvlG.addKeyword(keyword);
-
-  keyword.setName("InstrumentPointing");
-  keyword.setValue("Table");
-  kernels_pvlG.addKeyword(keyword);
-
-  keyword.setName("InstrumentPosition");
-  keyword.setValue("Table");
-  kernels_pvlG.addKeyword(keyword);
-
-  keyword.setName("InstrumentAddendum");
-  keyword.setValue( kernelsTable.Translate("InstrumentAddendum",mission));
-  kernels_pvlG.addKeyword(keyword);
+  PvlKeyword &addendumKeyword = kernels_pvlG.findKeyword("InstrumentAddendum");
+  addendumKeyword.setValue( kernelsTable.Translate("InstrumentAddendum",mission));
 
   // Load all the kernals
   Load_Kernel(kernels_pvlG["TargetPosition"]);
