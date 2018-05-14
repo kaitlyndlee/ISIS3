@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
- 
+
 <application name="autoseed" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://isis.astrogeology.usgs.gov/Schemas/Application/application.xsd">
 
   <brief>
@@ -35,7 +35,7 @@ Group = PolygonSeederAlgorithm
 End_Group
     </pre>
     <p>
-      The seeding definision file above tells <i>autoseed</i> to use an 
+      The seeding definision file above tells <i>autoseed</i> to use an
       algorithum called "Grid", not to seed points in overlaps with a thickness
       ratio of less than "0.3", not to seed overlaps with an area of less than
       "100000000 square meters", and to space the pattern of points at
@@ -109,7 +109,7 @@ End_Group
       Fixed the progress objects.
     </change>
     <change name="Travis Addair" date="2009-08-05">
-      Moved seed definition parameters to unique group, and encapsulated the 
+      Moved seed definition parameters to unique group, and encapsulated the
       group creation within the seeding objects.
     </change>
     <change name="Travis Addair" date="2009-08-11">
@@ -125,7 +125,7 @@ End_Group
     </change>
     <change name="Christopher Austin" date="2009-11-25">
       Added the keywords "MinDN" and "MaxDN" to the SEEDDEF possibilities.
-      Using these keywords will increase runtime. 
+      Using these keywords will increase runtime.
     </change>
     <change name="Eric Hyer" date="2010-01-29">
       Added Results group to print.prt
@@ -138,7 +138,7 @@ End_Group
       or unrecognized keywords found in the def file to the user.
     </change>
     <change name="Sharmila Prasad" date="2010-04-28">
-      Fixed error while checking for max and min dn values restriction for a 
+      Fixed error while checking for max and min dn values restriction for a
       valid control point. Ignore control points with special pixel dn values.
     </change>
     <change name="Christopher Austin" date="2010-05-05">
@@ -179,7 +179,7 @@ End_Group
     <change name="Jeannie Backer" date="2016-04-22">
       Modified code to get TargetRadii using the cube label and mapping group if these
       values can not be found using the TargetName alone. Sets control net using these
-      radii values rather than attempting to find them again. 
+      radii values rather than attempting to find them again.
       References #3892
     </change>
   </history>
@@ -198,7 +198,7 @@ End_Group
           <p>
           Use this parameter to select a filename which contains a list of
           cube filenames. The cubes identified inside this file will be used
-          to create the control network. The following is an example of the 
+          to create the control network. The following is an example of the
           contents of a typical FROMLIST file:
           </p>
           <pre>
@@ -257,11 +257,11 @@ End_Group
             Use this parameter to provide the file name of an existing control
             network. The control measures in this network should correspond
             to the cubes in the FROMLIST. If any control point from this
-            network falls inside one of the overlaps listed in 
+            network falls inside one of the overlaps listed in
             <i>OVERLAPLIST</i> that overlap will be ignored (i.e., not seeded)
           </p>
           <p>
-            To combine the existing network (CNET) with the one created by 
+            To combine the existing network (CNET) with the one created by
             <i>autoseed</i> (ONET) use the <i>cnetmerge</i> application.
           </p>
         </description>
@@ -290,7 +290,7 @@ End_Group
           This file will contain the errors that occurred while seeding the
           overlaps. Including:
           <ul>
-            <li>Overlap areas where no points where seeded</li>
+            <li>Overlap areas where no points were seeded</li>
           </ul>
         </description>
       </parameter>
@@ -335,11 +335,11 @@ End_Group
           <p>
             Note: Make sure there are enough "?"s for all the control
             points that might be created during this run. If all the possible
-            point IDs are exausted the program will exit with an error, and 
+            point IDs are exausted the program will exit with an error, and
             will not produce an output control network file. The number of
-            control points created depends on the size and quantity of 
+            control points created depends on the size and quantity of
             image overlaps and the density of control points as defined
-            by the DEFFILE parameter. 
+            by the DEFFILE parameter.
           </p>
           <p>
             Examples of POINTID:
@@ -359,9 +359,9 @@ End_Group
         </brief>
         <description>
             A text description of the contents of the output control network.
-            The text can contain anything the user wants. For example it 
+            The text can contain anything the user wants. For example it
             could be used to describe the area of interest the control network
-            is being made for. 
+            is being made for.
         </description>
       </parameter>
 

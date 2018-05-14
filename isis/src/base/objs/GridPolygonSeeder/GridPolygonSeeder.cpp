@@ -32,6 +32,7 @@
 #include "IString.h"
 
 #include "GridPolygonSeeder.h"
+using namespace std;
 
 namespace Isis {
 
@@ -92,7 +93,8 @@ namespace Isis {
     // Call the parents standardTests member
     QString msg = StandardTests(multiPoly, polyBoundBox);
     if(!msg.isEmpty()) {
-      return points;
+      throw IException(IException::User, msg, _FILEINFO_);
+      //return points;
     }
 
     // Do grid specific tests to make sure this poly should be seeded
@@ -492,4 +494,3 @@ namespace Isis {
 extern "C" Isis::PolygonSeeder *GridPolygonSeederPlugin(Isis::Pvl &pvl) {
   return new Isis::GridPolygonSeeder(pvl);
 }
-

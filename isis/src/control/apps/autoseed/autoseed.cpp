@@ -248,22 +248,23 @@ void IsisMain() {
 
   Pvl outputPvl;
   PvlKeyword imageSN;
-  PvlKeyword NoOverlap;
   PvlObject overlapPolygon;
   PvlGroup imageList;
-  PvlKeyword seededPoints;
+  PvlGroup seededPoints = PvlGroup("SeededPoints");
+  PvlKeyword numSeededPoints;
+  PvlKeyword error;
+  int overlapCount = 0;
 
   for (int ov = 0; ov < overlaps.Size(); ++ov) {
     progress.CheckStatus();
 
     if (overlaps[ov]->Size() == 1) {
       stats_noOverlap++;
-      NoOverlap = PvlKeyword("OverlapPolygon" + QString::number(ov + 1), "No Overlap");
-      outputPvl.addKeyword(NoOverlap);
       continue;
     }
 
-    overlapPolygon = PvlObject("OverlapPolygon" + QString::number(ov + 1));
+    overlapCount++;
+    overlapPolygon = PvlObject("OverlapPolygon" + QString::number(overlapCount));
     imageList = PvlGroup("OverlappingImages");
     const ImageOverlap *imageOV = overlaps[ov];
     for (int i = 0; i < imageOV->Size(); i++) {
@@ -289,18 +290,17 @@ void IsisMain() {
       }
 
       if (overlapSeeded) {
-        seededPoints = PvlKeyword("SeededPoints", "No points seeded because they were previously seeded" );
-        overlapPolygon.addKeyword(seededPoints);
+        numSeededPoints = PvlKeyword("NumOfSeededPoints", "0; points were previously seeded");
+        seededPoints.addKeyword(numSeededPoints);
+        overlapPolygon.addGroup(seededPoints);
         continue;
       }
     }
 
-    outputPvl.addObject(overlapPolygon);
-    cout << outputPvl <<endl;
-
     // Seed this overlap with points
     const geos::geom::MultiPolygon *polygonOverlaps = overlaps[ov]->Polygon();
     std::vector<geos::geom::Point *> points;
+    QString errorMessage;
 
     try {
       geos::geom::MultiPolygon *mp = NULL;
@@ -313,14 +313,11 @@ void IsisMain() {
       points = seeder->Seed(mp);
     }
     catch (IException &e) {
-
       if (ui.WasEntered("ERRORS")) {
-
         if (errorNum > 0) {
           errors << endl;
         }
         errorNum++;
-
         errors << e.toPvl().group(0).findKeyword("Message")[0];
         for (int serNum = 0; serNum < overlaps[ov]->Size(); serNum++) {
           if (serNum == 0) {
@@ -332,14 +329,26 @@ void IsisMain() {
           errors << (*overlaps[ov])[serNum];
         }
       }
-
-      continue;
+      errorMessage = e.toPvl().group(0).findKeyword("Message")[0];
+      //continue;
     }
+    numSeededPoints = PvlKeyword( "NumOfSeededPoints", QString::number(points.size()) );
+    seededPoints.addKeyword(numSeededPoints);
 
     // No points were seeded in this polygon, so collect some stats and move on
     if (points.size() == 0) {
       stats_tolerance++;
+      error = PvlKeyword("Error", errorMessage);
+      seededPoints.addKeyword(error);
+      overlapPolygon.addGroup(seededPoints);
+      outputPvl.addObject(overlapPolygon);
+      cout << outputPvl <<endl;
       continue;
+    }
+    else {
+      overlapPolygon.addGroup(seededPoints);
+      outputPvl.addObject(overlapPolygon);
+      cout << outputPvl <<endl;
     }
 
     vector<geos::geom::Point *> seed;
@@ -464,8 +473,12 @@ void IsisMain() {
       delete seed[point];
 
     } // End of create control points loop
-
   } // End of seeding loop
+
+  if (stats_noOverlap == overlaps.Size()) {
+    PvlKeyword noOverlap = PvlKeyword("Overlap", "No overlap between input cubes");
+    outputPvl.addKeyword(noOverlap);
+  }
 
   // All done with the UGMs so delete them
   for (unsigned int sn = 0; sn < gMaps.size(); ++sn) {
@@ -479,7 +492,7 @@ void IsisMain() {
     points[i] = NULL;
   }
 
-  //Log the ERRORS file
+  // Log the ERRORS file
   if (ui.WasEntered("ERRORS") && errorNum > 0) {
     QString errorname = ui.GetFileName("ERRORS");
     std::ofstream errorsfile;
