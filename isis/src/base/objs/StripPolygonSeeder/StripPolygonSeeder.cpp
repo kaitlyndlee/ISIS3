@@ -75,7 +75,7 @@ namespace Isis {
     // Call the parents standardTests member
     QString msg = StandardTests(multiPoly, polyBoundBox);
     if(!msg.isEmpty()) {
-      return points;
+      throw IException(IException::User, msg, _FILEINFO_);
     }
 
     // Do strip seeder specific tests to make sure this poly should be seeded
@@ -209,4 +209,3 @@ namespace Isis {
 extern "C" Isis::PolygonSeeder *StripPolygonSeederPlugin(Isis::Pvl &pvl) {
   return new Isis::StripPolygonSeeder(pvl);
 }
-

@@ -94,7 +94,6 @@ namespace Isis {
     QString msg = StandardTests(multiPoly, polyBoundBox);
     if(!msg.isEmpty()) {
       throw IException(IException::User, msg, _FILEINFO_);
-      //return points;
     }
 
     // Do grid specific tests to make sure this poly should be seeded
@@ -151,7 +150,7 @@ namespace Isis {
     // Call the parents standardTests member
     QString msg = StandardTests(multiPoly, polyBoundBox);
     if(!msg.isEmpty()) {
-      return points;
+      throw IException(IException::User, msg, _FILEINFO_);
     }
 
     geos::geom::Point *centroid = multiPoly->getCentroid();

@@ -1,0 +1,8 @@
+Group = Tolerances
+  Sample = 0.00000005
+  Line = 0.00000010
+  AprioriSample = 0.00000005
+  AprioriLine = 0.00000010
+End_Group
+
+End

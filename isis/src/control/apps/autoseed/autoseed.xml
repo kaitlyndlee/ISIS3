@@ -182,6 +182,10 @@ End_Group
       radii values rather than attempting to find them again.
       References #3892
     </change>
+    <change name="Kaitlyn Lee" date="2018-05-14">
+      Added LOG parameter to log all overlap polygons, overlapping images,
+      and number of seeded points. Fixes #2360.
+    </change>
   </history>
 
   <groups>
@@ -292,6 +296,20 @@ End_Group
           <ul>
             <li>Overlap areas where no points were seeded</li>
           </ul>
+        </description>
+      </parameter>
+
+      <parameter name="LOG">
+        <type>filename</type>
+        <fileMode>output</fileMode>
+        <internalDefault>No Output</internalDefault>
+        <brief>
+          Logs overlap polygons that are successfully seeded.
+        </brief>
+        <description>
+          This file will contain a list of all overlap polyongs, the serial
+          numbers of all images in each overlap polygon, and how many points
+          were successfully seeded.
         </description>
       </parameter>
 

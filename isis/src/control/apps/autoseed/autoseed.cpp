@@ -246,7 +246,6 @@ void IsisMain() {
   int cpIgnoredCount = 0;
   int cmIgnoredCount = 0;
 
-  Pvl outputPvl;
   PvlKeyword imageSN;
   PvlObject overlapPolygon;
   PvlGroup imageList;
@@ -254,6 +253,7 @@ void IsisMain() {
   PvlKeyword numSeededPoints;
   PvlKeyword error;
   int overlapCount = 0;
+  Pvl logPvl;
 
   for (int ov = 0; ov < overlaps.Size(); ++ov) {
     progress.CheckStatus();
@@ -262,10 +262,12 @@ void IsisMain() {
       stats_noOverlap++;
       continue;
     }
-
     overlapCount++;
+
+    // Log the overlap polygons and their images
     overlapPolygon = PvlObject("OverlapPolygon" + QString::number(overlapCount));
     imageList = PvlGroup("OverlappingImages");
+
     const ImageOverlap *imageOV = overlaps[ov];
     for (int i = 0; i < imageOV->Size(); i++) {
       imageSN = PvlKeyword("ImageSN", (*imageOV)[i]);
@@ -332,23 +334,21 @@ void IsisMain() {
       errorMessage = e.toPvl().group(0).findKeyword("Message")[0];
       //continue;
     }
+
+    // Log the number of seeded points
     numSeededPoints = PvlKeyword( "NumOfSeededPoints", QString::number(points.size()) );
     seededPoints.addKeyword(numSeededPoints);
+    overlapPolygon.addGroup(seededPoints);
+    logPvl.addObject(overlapPolygon);
 
     // No points were seeded in this polygon, so collect some stats and move on
     if (points.size() == 0) {
       stats_tolerance++;
-      error = PvlKeyword("Error", errorMessage);
-      seededPoints.addKeyword(error);
-      overlapPolygon.addGroup(seededPoints);
-      outputPvl.addObject(overlapPolygon);
-      cout << outputPvl <<endl;
+      // error = PvlKeyword("Error", errorMessage);
+      // seededPoints.addKeyword(error);
+      // overlapPolygon.addGroup(seededPoints);
+      // logPvl.addObject(overlapPolygon);
       continue;
-    }
-    else {
-      overlapPolygon.addGroup(seededPoints);
-      outputPvl.addObject(overlapPolygon);
-      cout << outputPvl <<endl;
     }
 
     vector<geos::geom::Point *> seed;
@@ -475,9 +475,10 @@ void IsisMain() {
     } // End of create control points loop
   } // End of seeding loop
 
+  // Log if there were no overlap polygons
   if (stats_noOverlap == overlaps.Size()) {
     PvlKeyword noOverlap = PvlKeyword("Overlap", "No overlap between input cubes");
-    outputPvl.addKeyword(noOverlap);
+    logPvl.addKeyword(noOverlap);
   }
 
   // All done with the UGMs so delete them
@@ -501,10 +502,15 @@ void IsisMain() {
     errorsfile.close();
   }
 
+  // Log the overlap polygons that were seeded successfully
+  if ( ui.WasEntered("LOG") ) {
+    logPvl.write( ui.GetFileName("LOG") );
+  }
+
   // Make sure the control network is not empty
   if (cnet.GetNumPoints() == 0) {
-    QString msg = "The ouput control network is empty. This is likely due";
-    msg += " to the input cubes failing to overlap.";
+    QString msg = "The ouput control network is empty. Check the ERRORS log file";
+    msg += " [" + ui.GetFileName("ERRORS") + "]";
     throw IException(IException::User, msg, _FILEINFO_);
   }
 

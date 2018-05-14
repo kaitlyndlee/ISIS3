@@ -63,6 +63,8 @@ namespace Isis {
    *                                            seeding
    *   @history 2010-05-05 Christopher Austin - Fixed major bug where the strip
    *                                            was not a strip.
+   *   @history 2018-05-14 Kaitlyn Lee - Seed() now throws an exception when
+   *            StandardTests() returns an error message. Fixes #2360.
    */
   class StripPolygonSeeder : public PolygonSeeder {
     public:

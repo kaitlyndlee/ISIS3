@@ -71,7 +71,7 @@ namespace Isis {
     // Call the parents standardTests member
     QString msg = StandardTests(multiPoly, polyBoundBox);
     if(!msg.isEmpty()) {
-      return points;
+      throw IException(IException::User, msg, _FILEINFO_);
     }
 
     // Do limit seeder specific tests to make sure this poly should be seeded
@@ -246,4 +246,3 @@ namespace Isis {
 extern "C" Isis::PolygonSeeder *LimitPolygonSeederPlugin(Isis::Pvl &pvl) {
   return new Isis::LimitPolygonSeeder(pvl);
 }
-

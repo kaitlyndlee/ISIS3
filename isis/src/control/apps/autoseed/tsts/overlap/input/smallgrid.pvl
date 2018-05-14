@@ -1,0 +1,9 @@
+Object = AutoSeed
+   Group = PolygonSeederAlgorithm
+     Name = Grid
+     MinimumThickness = 0.0
+     MinimumArea = 1000 <meters>
+     XSpacing = 10000 <meters>
+     YSpacing = 5000 <meters>
+   EndGroup
+EndObject

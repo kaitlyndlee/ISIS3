@@ -59,6 +59,8 @@ namespace Isis {
    *                                   variable
    *   @history 2010-04-20 Christopher Austin - adapted for generic/unitless
    *                                            seeding
+   *   @history 2018-05-14 Kaitlyn Lee - Seed() now throws an exception when
+   *            StandardTests() returns an error message. Fixes #2360.
    */
   class LimitPolygonSeeder : public PolygonSeeder {
     public:

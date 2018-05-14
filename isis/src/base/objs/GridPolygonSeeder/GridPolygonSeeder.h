@@ -60,6 +60,8 @@ namespace Isis {
    *                                 returns
    * @history 2010-04-20 Christopher Austin - adapted for generic/unitless
    *                                          seeding
+   * @history 2018-05-14 Kaitlyn Lee - SeedGrid() and SeedSubGrid() now throw
+   *          an exception when StandardTests() returns an error message. Fixes #2360.                             
    */
   class GridPolygonSeeder : public PolygonSeeder {
     public:
