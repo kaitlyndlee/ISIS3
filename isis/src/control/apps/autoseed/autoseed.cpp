@@ -332,22 +332,23 @@ void IsisMain() {
         }
       }
       errorMessage = e.toPvl().group(0).findKeyword("Message")[0];
-      //continue;
+      // continue;
     }
 
-    // Log the number of seeded points
+    // Log the number of seeded points, even if we fail to seed.
+    // points.size will be 0 if there were any errors.
     numSeededPoints = PvlKeyword( "NumOfSeededPoints", QString::number(points.size()) );
     seededPoints.addKeyword(numSeededPoints);
+    if (errorMessage != NULL) {
+      PvlKeyword seedError = PvlKeyword("Error", errorMessage);
+      seededPoints.addKeyword(seedError);
+    }
     overlapPolygon.addGroup(seededPoints);
     logPvl.addObject(overlapPolygon);
 
     // No points were seeded in this polygon, so collect some stats and move on
     if (points.size() == 0) {
       stats_tolerance++;
-      // error = PvlKeyword("Error", errorMessage);
-      // seededPoints.addKeyword(error);
-      // overlapPolygon.addGroup(seededPoints);
-      // logPvl.addObject(overlapPolygon);
       continue;
     }
 
@@ -509,8 +510,7 @@ void IsisMain() {
 
   // Make sure the control network is not empty
   if (cnet.GetNumPoints() == 0) {
-    QString msg = "The ouput control network is empty. Check the ERRORS log file";
-    msg += " [" + ui.GetFileName("ERRORS") + "]";
+    QString msg = "The ouput control network is empty. Check the LOG file";
     throw IException(IException::User, msg, _FILEINFO_);
   }
 
