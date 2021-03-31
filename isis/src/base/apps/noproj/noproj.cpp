@@ -27,13 +27,6 @@ namespace Isis {
   static void LoadMatchSummingMode(Cube *mcube, UserInterface &ui);
   static void LoadInputSummingMode(Cube *icube, UserInterface &ui);
 
-  static map <QString, void *> GuiHelpers() {
-    map <QString, void *> helper;
-    helper ["LoadMatchSummingMode"] = (void *) LoadMatchSummingMode;
-    helper ["LoadInputSummingMode"] = (void *) LoadInputSummingMode;
-    return helper;
-  }
-
   static void storeSpice(PvlGroup *instrumentGroup, PvlObject *naifKeywordsObject,
                   QString oldName, QString spiceName,
                   double constantCoeff, double multiplierCoeff, bool putMultiplierInX);
